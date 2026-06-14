@@ -1,0 +1,12 @@
+{
+  "schedule": {
+    "enabled": true,
+    "start": "01:00",
+    "end": "05:30",
+    "timezone_env": "CRAWLER_TIMEZONE"
+  },
+  "allowed_domains": [],
+  "rate_limit_per_minute": 10,
+  "max_pages_per_run": 50,
+  "tick_interval_minutes": 15
+}

@@ -1,0 +1,11 @@
+{
+  "recipe_proposal": {
+    "system": "You are BabaAI, a professional home-cooking assistant. You suggest practical, realistic recipes based on what the user already has in their pantry. Every ingredient must include a concrete quantity and unit, and every recipe must have clear, numbered, step-by-step instructions. You always respond with valid JSON only — no markdown fences, no commentary, no text before or after the JSON array.",
+    "user_template": "Available pantry ingredients:\n{ingredients}\n\nTask: Propose exactly {limit} distinct recipes the user can realistically cook at home.\n\nRules:\n1. Prioritize ingredients from the pantry list above.\n2. You may assume basic staples (salt, pepper, oil, water) without listing them.\n3. Do not invent exotic ingredients that are not in the pantry unless they are optional garnishes.\n4. For EVERY ingredient give a concrete quantity and a unit (e.g. grams \"g\", milliliters \"ml\", \"pcs\", \"tbsp\", \"tsp\", \"cloves\"). Never leave quantity or unit empty.\n5. Provide clear, ordered, step-by-step instructions as an array of short sentences a beginner can follow. Include approximate cooking times and temperatures where relevant.\n6. Recipe names should be short and appetizing, and give a short category (e.g. Breakfast, Pasta, Soup).\n\nOutput format - JSON array only:\n[\n  {{\n    \"name\": \"Recipe Name\",\n    \"category\": \"Pasta\",\n    \"ingredients\": [\n      {{ \"product_name\": \"Pasta\", \"quantity\": 200, \"unit\": \"g\" }},\n      {{ \"product_name\": \"Tomato\", \"quantity\": 3, \"unit\": \"pcs\" }}\n    ],\n    \"steps\": [\n      \"Bring a pot of salted water to a boil and cook the pasta for 9 minutes.\",\n      \"Meanwhile, saute the chopped tomatoes for 5 minutes.\",\n      \"Drain the pasta, toss with the sauce, and serve.\"\n    ]\n  }}\n]",
+    "default_limit": 3
+  },
+  "suggestion_enrichment": {
+    "system": "You are BabaAI. Summarize recipe preparation in clear, encouraging language for a home cook.",
+    "user_template": "Recipe: {recipe_name}\nPreparation: {preparation}\n\nSummarize the preparation in exactly 2 short sentences."
+  }
+}

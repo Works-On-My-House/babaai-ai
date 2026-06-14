@@ -1,0 +1,36 @@
+# BabaAI AI service (+ Qdrant)
+#
+#   cp .env.example .env
+#   docker compose up --build
+#
+# Requires core reachable at CORE_JWKS_URL / CORE_BASE_URL (see .env).
+
+services:
+  qdrant:
+    image: qdrant/qdrant:v1.12.5
+    container_name: babaai-qdrant
+    restart: unless-stopped
+    ports:
+      - "${QDRANT_PORT}:6333"
+    volumes:
+      - qdrant_data:/qdrant/storage
+
+  ai:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: babaai-ai
+    restart: unless-stopped
+    env_file:
+      - .env
+    depends_on:
+      - qdrant
+    ports:
+      - "${AI_PORT}:8082"
+    volumes:
+      - .:/app
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+volumes:
+  qdrant_data:

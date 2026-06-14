@@ -1,0 +1,33 @@
+{
+  "agents": [
+    {
+      "id": "ollama-local",
+      "provider": "ollama",
+      "model": "llama3.2",
+      "tier": "free",
+      "roles": ["enrichment", "fallback"],
+      "base_url_env": "OLLAMA_BASE_URL"
+    },
+    {
+      "id": "openai-primary",
+      "provider": "openai",
+      "model": "gpt-4o-mini",
+      "tier": "paid",
+      "roles": ["suggestions", "rag_answer"],
+      "api_key_env": "OPENAI_API_KEY"
+    },
+    {
+      "id": "anthropic-secondary",
+      "provider": "anthropic",
+      "model": "claude-3-5-sonnet-latest",
+      "tier": "paid",
+      "roles": ["substitutions", "nutrition"],
+      "api_key_env": "ANTHROPIC_API_KEY"
+    }
+  ],
+  "routing": {
+    "suggestion_enrichment": ["openai-primary", "anthropic-secondary", "ollama-local"],
+    "recipe_proposal": ["ollama-local"],
+    "rag_qa": ["openai-primary", "ollama-local"]
+  }
+}

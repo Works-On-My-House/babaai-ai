@@ -1,0 +1,28 @@
+# Standalone Ollama — separate from the AI service stack.
+# Models persist in volume babaai_ollama_data and are NOT removed when you run
+# `docker compose down -v` on the main AI compose file.
+#
+# Start (once, or after reboot):
+#   docker compose -f docker-compose.ollama.yml up -d
+#
+# Pull a model (once per model):
+#   docker exec -it babaai-ollama ollama pull llama3.2
+#
+# Stop Ollama (keeps downloaded models):
+#   docker compose -f docker-compose.ollama.yml down
+
+name: babaai-ollama
+
+services:
+  ollama:
+    image: ollama/ollama:latest
+    container_name: babaai-ollama
+    restart: unless-stopped
+    ports:
+      - "${OLLAMA_PORT}:11434"
+    volumes:
+      - ollama_data:/root/.ollama
+
+volumes:
+  ollama_data:
+    name: babaai_ollama_data

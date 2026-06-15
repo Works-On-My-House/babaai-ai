@@ -9,7 +9,10 @@ async def answer_with_rag(question: str) -> RagQuestionResponse:
     if not chunks:
         return RagQuestionResponse(
             question=question,
-            answer="I couldn't find relevant recipe context yet. Try again after recipes are indexed.",
+            answer=(
+                "I couldn't find relevant recipe context yet. "
+                "Try again after recipes are indexed."
+            ),
             sources=[],
         )
 

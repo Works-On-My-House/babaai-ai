@@ -46,7 +46,11 @@ def upsert_recipe_chunks(recipe_id: UUID, chunks: list[tuple[int, str, list[floa
     if not points:
         client.delete(
             collection_name=settings.qdrant_collection,
-            points_selector={"filter": {"must": [{"key": "recipe_id", "match": {"value": str(recipe_id)}}]}},
+            points_selector={
+                "filter": {
+                    "must": [{"key": "recipe_id", "match": {"value": str(recipe_id)}}],
+                },
+            },
         )
         return 0
     client.upsert(collection_name=settings.qdrant_collection, points=points)

@@ -42,7 +42,10 @@ class RecipeIndexer:
         ]
         for ingredient in recipe.get("ingredients", []):
             text_parts.append(
-                f"{ingredient.get('product_name')} {ingredient.get('quantity')} {ingredient.get('unit')}"
+                " ".join(
+                    str(ingredient.get(field, ""))
+                    for field in ("product_name", "quantity", "unit")
+                )
             )
         full_text = "\n".join(part for part in text_parts if part)
         chunk_size = int(self.config.get("chunk_size", 512))

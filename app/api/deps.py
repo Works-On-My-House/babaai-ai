@@ -5,7 +5,7 @@ from typing import Any
 from uuid import UUID
 
 import httpx
-from fastapi import Depends, Header, HTTPException, status
+from fastapi import Header, HTTPException, status
 from jose import jwt
 from jose.exceptions import JWTError
 
@@ -15,10 +15,15 @@ logger = logging.getLogger(__name__)
 _jwks_cache: dict[str, Any] | None = None
 
 
-def require_service_token(x_service_token: str | None = Header(default=None, alias="X-Service-Token")) -> None:
+def require_service_token(
+    x_service_token: str | None = Header(default=None, alias="X-Service-Token"),
+) -> None:
     settings = get_settings()
     if not x_service_token or x_service_token != settings.ai_service_token:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid service token")
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid service token",
+        )
 
 
 def _load_jwks() -> dict[str, Any]:
@@ -41,8 +46,14 @@ def get_current_user_id(authorization: str | None = Header(default=None)) -> UUI
         payload = jwt.decode(token, jwks, algorithms=["RS256"], options={"verify_aud": False})
         subject = payload.get("sub")
         if not subject:
-            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token subject")
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid token subject",
+            )
         return UUID(str(subject))
     except (JWTError, ValueError) as exc:
         logger.debug("JWT validation failed: %s", exc)
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid or expired token") from exc
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid or expired token",
+        ) from exc

@@ -1,15 +1,13 @@
 from __future__ import annotations
 
 import logging
-from typing import Any
 from uuid import UUID
 
-import httpx
-from fastapi import APIRouter, Depends, Header, HTTPException, status
+from fastapi import APIRouter, Depends
 from pydantic import BaseModel, Field
 
-from app.agents.chains.recipe_proposal import propose_recipes
 from app.agents.chains.rag_qa import answer_with_rag
+from app.agents.chains.recipe_proposal import propose_recipes
 from app.api.deps import get_current_user_id, require_service_token
 from app.core.config import get_settings
 from app.rag.indexer import RecipeIndexer

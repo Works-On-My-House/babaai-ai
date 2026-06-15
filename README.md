@@ -63,5 +63,14 @@ JSON configs in `config/`:
 
 ```bash
 pip install -r requirements.txt
+ruff check .
 pytest
 ```
+
+### CI checks
+
+On every push to `main` and on pull requests, GitHub Actions runs:
+
+- `ruff check .` — lint
+- `pytest` — unit and API tests (Python 3.14.5)
+- `docker build` + `pytest` inside the container

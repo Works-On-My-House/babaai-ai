@@ -1,10 +1,12 @@
+import hashlib
 import os
 
 os.environ.update(
     {
         "TESTING": "1",
         "CORS_ORIGINS": "http://localhost:5173",
-        "AI_SERVICE_TOKEN": "test-ai-token",
+        # ai stores only the hash of the service secret; tests send the raw "test-ai-token".
+        "AI_SERVICE_TOKEN_HASH": hashlib.sha256(b"test-ai-token").hexdigest(),
         "CORE_JWKS_URL": "http://localhost:8081/.well-known/jwks.json",
         "CORE_BASE_URL": "http://localhost:8081",
         "CORE_SERVICE_TOKEN": "test-ai-token",

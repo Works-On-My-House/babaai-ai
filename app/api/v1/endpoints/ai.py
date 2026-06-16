@@ -8,7 +8,12 @@ from pydantic import BaseModel, Field
 
 from app.agents.chains.rag_qa import answer_with_rag
 from app.agents.chains.recipe_proposal import propose_recipes
-from app.api.deps import get_current_user_id, require_service_token
+from app.api.deps import (
+    RoutingDecision,
+    get_current_user_id,
+    require_service_token,
+    route_request,
+)
 from app.core.config import get_settings
 from app.rag.indexer import RecipeIndexer
 from app.rag.schemas import RagQuestionRequest, RagQuestionResponse
@@ -40,6 +45,9 @@ class AiRecipeProposal(BaseModel):
 
 class ProposalResponse(BaseModel):
     proposals: list[AiRecipeProposal] = Field(default_factory=list)
+    # Set when there are no proposals AND there's a user-facing reason (e.g. the model failed).
+    # The frontend shows this so a failure isn't silently an empty section.
+    error: str | None = None
 
 
 class ReindexRequest(BaseModel):
@@ -56,9 +64,25 @@ async def ai_proposals(
     _: None = Depends(require_service_token),
 ) -> ProposalResponse:
     settings = get_settings()
-    if not settings.ollama_enabled or not body.pantry_names:
+    logger.info(
+        "ai_proposals: ollama_enabled=%s pantry_names=%d limit=%d",
+        settings.ollama_enabled,
+        len(body.pantry_names),
+        body.limit,
+    )
+    if not settings.ollama_enabled:
+        logger.warning("ai_proposals: returning empty — Ollama is disabled")
+        return ProposalResponse(error="AI suggestions are currently disabled.")
+    if not body.pantry_names:
+        logger.info("ai_proposals: no pantry ingredients provided — nothing to suggest")
         return ProposalResponse()
     raw = await propose_recipes(body.pantry_names, limit=body.limit)
+    logger.info("ai_proposals: Ollama produced %d proposal(s)", len(raw))
+    if not raw:
+        logger.warning("ai_proposals: returning empty — Ollama produced no usable proposals")
+        return ProposalResponse(
+            error="AI suggestions are temporarily unavailable. Please try again."
+        )
     proposals = [
         AiRecipeProposal(
             name=item.name,
@@ -98,6 +122,25 @@ async def rag_qa(
 ) -> RagQuestionResponse:
     _ = user_id
     return await answer_with_rag(body.question)
+
+
+class SuggestionRequest(BaseModel):
+    prompt: str = Field(min_length=1)
+
+
+@router.post("/suggestions", response_model=RoutingDecision)
+async def ai_suggestions(
+    body: SuggestionRequest,
+    decision: RoutingDecision = Depends(route_request),
+) -> RoutingDecision:
+    """User-facing AI entrypoint (FE → gateway → ai, direct).
+
+    Skeleton: any authenticated user is admitted; ``route_request`` resolves the tier
+    (premium vs free Ollama) and enforces the premium daily quota. The streaming LLM
+    call against ``decision.agent_id`` is out of scope here (ClickUp 869dqh96c).
+    """
+    _ = body
+    return decision
 
 
 @router.get("/health")

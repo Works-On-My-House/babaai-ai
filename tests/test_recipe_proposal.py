@@ -22,10 +22,28 @@ def test_extract_json_array_from_plain_json():
     assert items[0]["name"] == "Pasta Bowl"
 
 
+def test_extract_json_array_from_single_object():
+    # Model returned one recipe object instead of an array.
+    items = _extract_json_array('{"name": "Soup", "steps": ["Heat."], "ingredients": []}')
+    assert len(items) == 1
+    assert items[0]["name"] == "Soup"
+
+
+def test_extract_json_array_from_wrapper_object():
+    # Model wrapped the array in a key, e.g. {"recipes": [...]}.
+    items = _extract_json_array('{"recipes": [{"name": "Soup", "steps": [], "ingredients": []}]}')
+    assert len(items) == 1
+    assert items[0]["name"] == "Soup"
+
+
+def test_extract_json_array_returns_empty_on_garbage():
+    assert _extract_json_array("sorry, I cannot help with that") == []
+
+
 def test_propose_recipes_returns_structured_proposals(monkeypatch):
     class FakeRouter:
-        async def route(self, task, prompt, *, system=None):
-            _ = (task, prompt, system)
+        async def route(self, task, prompt, *, system=None, json_format=False):
+            _ = (task, prompt, system, json_format)
             return json.dumps(
                 [
                     {
@@ -66,8 +84,8 @@ def test_propose_recipes_returns_structured_proposals(monkeypatch):
 
 def test_propose_recipes_accepts_plain_string_ingredients(monkeypatch):
     class FakeRouter:
-        async def route(self, task, prompt, *, system=None):
-            _ = (task, prompt, system)
+        async def route(self, task, prompt, *, system=None, json_format=False):
+            _ = (task, prompt, system, json_format)
             return json.dumps(
                 [
                     {

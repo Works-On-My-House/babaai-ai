@@ -56,26 +56,47 @@ def _parse_steps(raw: object) -> list[str]:
     return []
 
 
+def _slice_outer(text: str, open_ch: str, close_ch: str) -> str | None:
+    start = text.find(open_ch)
+    end = text.rfind(close_ch)
+    if start == -1 or end == -1 or end <= start:
+        return None
+    return text[start : end + 1]
+
+
+def _load_json(text: str) -> object | None:
+    """Parse the whole payload (clean JSON), else an outermost ``[...]`` or ``{...}`` slice."""
+    for candidate in (text, _slice_outer(text, "[", "]"), _slice_outer(text, "{", "}")):
+        if not candidate:
+            continue
+        try:
+            return json.loads(candidate)
+        except json.JSONDecodeError:
+            continue
+    return None
+
+
 def _extract_json_array(text: str) -> list[dict]:
     stripped = text.strip()
     block = _JSON_BLOCK_RE.search(stripped)
     if block:
         stripped = block.group(1).strip()
 
-    start = stripped.find("[")
-    end = stripped.rfind("]")
-    if start == -1 or end == -1 or end <= start:
-        return []
-
-    try:
-        parsed = json.loads(stripped[start : end + 1])
-    except json.JSONDecodeError:
+    parsed = _load_json(stripped)
+    if parsed is None:
         logger.warning("Failed to parse Ollama recipe JSON")
         return []
 
-    if not isinstance(parsed, list):
-        return []
-    return [item for item in parsed if isinstance(item, dict)]
+    # Accept a top-level array, a single recipe object, or a wrapper like {"recipes": [...]}.
+    if isinstance(parsed, list):
+        return [item for item in parsed if isinstance(item, dict)]
+    if isinstance(parsed, dict):
+        if "name" in parsed:
+            return [parsed]
+        for value in parsed.values():
+            if isinstance(value, list):
+                return [item for item in value if isinstance(item, dict)]
+    return []
 
 
 async def propose_recipes(
@@ -90,7 +111,7 @@ async def propose_recipes(
 
     router = AgentRouter()
     system, prompt = build_recipe_proposal_prompt(ingredient_names, limit=limit)
-    raw = await router.route("recipe_proposal", prompt, system=system)
+    raw = await router.route("recipe_proposal", prompt, system=system, json_format=True)
     if not raw:
         return []
 

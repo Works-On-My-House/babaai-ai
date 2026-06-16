@@ -12,6 +12,13 @@ from app.core.config import get_settings
 from app.core.exceptions import AppError, NotFoundError
 from app.rag.qdrant_store import ensure_collection
 
+# Ensure application logs (app.*) are emitted to stdout/stderr so they show in `docker logs`.
+# uvicorn only configures its own loggers; without this, app INFO/DEBUG never surface.
+logging.basicConfig(
+    level=os.getenv("LOG_LEVEL", "INFO").upper(),
+    format="%(asctime)s %(levelname)s %(name)s - %(message)s",
+)
+
 logger = logging.getLogger(__name__)
 settings = get_settings()
 

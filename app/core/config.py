@@ -12,9 +12,19 @@ class Settings(BaseSettings):
 
     cors_origins: str
 
-    # Service auth
-    ai_service_token: str
+    # Service auth (inbound core→ai). We store only the SHA-256 hash of the shared secret (never the
+    # plaintext) and verify by hashing the incoming header — same idea as the refresh-token store.
+    # (Outbound ai→core uses core_service_token below.)
+    ai_service_token_hash: str
     core_jwks_url: str
+
+    # User auth / tier routing
+    # Permission claim that grants the premium (fast) model + a daily token quota.
+    # Authenticated users without it fall back to the free Ollama tier.
+    ai_pro_permission: str = "AI_PRO_SUGGESTIONS"
+    premium_agent_id: str = "openai-primary"
+    # Daily premium token quota per user; <= 0 disables enforcement.
+    premium_daily_token_quota: int = 100_000
 
     # Core API (crawler ingestion)
     core_base_url: str
@@ -42,6 +52,12 @@ class Settings(BaseSettings):
     ollama_enabled: bool
     ollama_base_url: str
     ollama_model: str
+    # Per-request timeout (s). Fail fast instead of hanging — the caller degrades gracefully.
+    ollama_timeout_seconds: float = 45.0
+    # Keep the model resident between calls so it isn't reloaded (cold start) each time.
+    ollama_keep_alive: str = "30m"
+    # Cap generated tokens to bound latency; 0 = no explicit cap (Ollama default).
+    ollama_num_predict: int = 0
 
     crawler_timezone: str
     crawler_allow_force: bool

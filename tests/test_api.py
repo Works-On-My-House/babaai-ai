@@ -45,7 +45,8 @@ def test_proposals_with_valid_token_and_empty_pantry(client: TestClient) -> None
         json={"pantry_names": [], "limit": 3},
     )
     assert response.status_code == 200
-    assert response.json() == {"proposals": []}
+    # Empty pantry → no proposals and no error (nothing to suggest, not a failure).
+    assert response.json() == {"proposals": [], "error": None}
 
 
 def test_reindex_requires_service_token(client: TestClient) -> None:
